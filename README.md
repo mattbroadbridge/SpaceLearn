@@ -1,2 +1,2 @@
 # SpaceLearn
-Implementation of a space repetition learning system, aimed at learning languages.
+Implementation of a spaced repetition learning system, aimed at learning languages.
