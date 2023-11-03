@@ -1,4 +1,6 @@
 #import PyQt5
+from datetime import datetime, timedelta
+
 from PyQt5 import QtGui, QtCore, QtWidgets
 import sys
 from os import path, chdir, mkdir, getlogin
@@ -9,7 +11,7 @@ import Windows.mainWindow
 import Windows.addDeck
 import Windows.viewDeck
 import Windows.editDeck
-from Objects.profile import Profile
+from Objects.profile import Profile, card
 
 
 class MyWindow(QtWidgets.QMainWindow, Windows.mainWindow.Ui_MainWindow):
@@ -35,6 +37,34 @@ class MyWindow(QtWidgets.QMainWindow, Windows.mainWindow.Ui_MainWindow):
     def closeEvent(self, event):
         print("Closing app")
         self.profile.close_db()
+
+class PlayDeckWindow(QtWidgets.QDialog, Windows.viewDeck.Ui_Dialog):  # TODO Change this to play deck window when designed.
+
+    def __init__(self, profile, cards, parent=None):
+        super().__init__(parent)
+
+        self.profile = profile
+
+        self.cards = cards
+
+        self.setupUi(self)
+
+        self.setWindowTitle("Play Deck")    # TODO Display deck name
+
+    def gen_score(self, played_card, quality_score):
+        return played_card.score+(0.1-(5-quality_score)*(0.08+(5-quality_score)*0.02))
+
+    def gen_due_date(self, played_card):    # TODO Test this
+        if played_card.repetitions <= 1:
+            return datetime.today() + timedelta(days=1)
+        elif played_card.repetitions == 2:
+            return datetime.today() + timedelta(days=6)
+        else:
+            return (played_card.repetitions - 1) * played_card.score
+
+
+
+
 
 class ViewDecksWindow(QtWidgets.QDialog, Windows.viewDeck.Ui_Dialog):
     def __init__(self, profile, parent=None):
@@ -98,11 +128,42 @@ class EditDeckWindow(QtWidgets.QDialog, Windows.editDeck.Ui_Dialog):
         self.setWindowTitle(str(deck_name))
 
         self.addBtn.clicked.connect(self.add_card)
+        self.removeBtn.clicked.connect(self.remove_card)
         self.exitBtn.clicked.connect(self.close)
 
+        self.selected_card = None
+        self.cardList.itemClicked.connect(self.list_click)
+
+        self.list_map = {}
+
+        self.update_card_list()
+
+    def list_click(self):
+        self.selected_card = self.list_map[self.cardList.currentRow()]
+        print(self.selected_card)
 
     def add_card(self):
         self.profile.add_card(self.deck_name, self.questionEdit.toPlainText(), self.answerEdit.toPlainText())
+        self.update_card_list()
+
+
+    def remove_card(self):
+        if self.selected_card is not None:
+            self.profile.remove_card(self.deck_name, self.selected_card)
+            self.update_card_list()
+            self.selected_card = None
+
+
+    def update_card_list(self):
+        self.cardList.clear()
+        cards = self.profile.get_deck(self.deck_name)
+        list_pos = 0
+        for single_card in cards:
+            display_str = str(single_card.cardID) + ") " + str(single_card.question) + "   -   " + str(single_card.answer)
+            self.cardList.insertItem(list_pos, display_str)
+            self.list_map[list_pos] = single_card.cardID
+            list_pos = list_pos + 1
+
 
 class AddDeckWindow(QtWidgets.QDialog, Windows.addDeck.Ui_Dialog):
     def __init__(self, profile, parent=None):
@@ -122,16 +183,6 @@ class AddDeckWindow(QtWidgets.QDialog, Windows.addDeck.Ui_Dialog):
         msg.setText(res)
         msg.setWindowTitle("Message")
         msg.exec()
-
-
-class RemoveDeckWindow(QtWidgets.QDialog, Windows.addDeck.Ui_Dialog):
-    def __init__(self, profile, parent=None):
-        super().__init__(parent)
-
-        self.profile = profile
-
-        self.setupUi(self)
-
 
 
 def application():

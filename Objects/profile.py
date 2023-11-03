@@ -1,14 +1,37 @@
 import sys
 import traceback
+from datetime import date
 from os import path, mkdir, getlogin
 import sqlite3
+
 
 
 def scrub(table_name):
     return ''.join(char for char in table_name if char.isalnum())
 
 
+class card:
+    # Holds information regarding a single card in a deck
+    def __init__(self, cardID, question, answer, score, date_played, repetitions, date_due):
+
+        self.cardID = cardID
+        self.question = question
+        self.answer = answer
+        self.score = score
+        self.date_played = date_played
+        self.repetitions = repetitions
+        self.date_due = date_due
+
+
+class deck:
+    # Holds all cards in the deck.
+    # There is possibly some functionality that can be added to this class beyond holding a list, so creating it now
+    def __init__(self, cards):
+        self.cards = cards
+
+
 class Profile:
+    # Interacts with the SQLite database
     def __init__(self, name, home_path):
         self.name = name
         self.home_path = home_path
@@ -24,7 +47,7 @@ class Profile:
         res = self.run_sql(sql)
 
         if str(res.fetchone()) == "None":
-            sql_query = "CREATE TABLE " + scrub(deck_title) + "(id integer PRIMARY KEY, question string, answer string, score integer)"  # Apparently table names cant be parameterised, so scrub the input to prevent sql injections
+            sql_query = "CREATE TABLE " + scrub(deck_title) + "(id integer PRIMARY KEY, question string, answer string, score integer, date_completed datetime, repetitions integer, date_due datetime)"  # Apparently table names cant be parameterised, so scrub the input to prevent sql injections
             self.run_sql(sql_query)
             return deck_title + " added"
         else:
@@ -49,9 +72,9 @@ class Profile:
         return [x[0] for x in res.fetchall()]
 
     def add_card(self, deck_name, question, answer):
-        sql = "INSERT INTO " + scrub(deck_name) + "(question,answer,score) VALUES(?,?,?)"   # Needs parameters passing so running in this function rather than the general SQL run one
+        sql = "INSERT INTO " + scrub(deck_name) + "(question,answer,score,date_completed,repetitions,date_due) VALUES(?,?,?,?,?,?)"   # Needs parameters passing so running in this function rather than the general SQL run one
         try:
-            res = self.cur.execute(sql, (question, answer, "PLACEHOLDER"))
+            res = self.cur.execute(sql, (question, answer, 2.5, date.today(), 0, date.today()))
             self.con.commit()
         except sqlite3.Error as er:
             print('SQLite error: %s' % (' '.join(er.args)))
@@ -60,6 +83,20 @@ class Profile:
             exc_type, exc_value, exc_tb = sys.exc_info()
             print(traceback.format_exception(exc_type, exc_value, exc_tb))
         return res
+
+    def remove_card(self, deck_name, cardID):
+        sql = "DELETE FROM " + scrub(deck_name) + " WHERE id = " + str(cardID)
+        self.run_sql(sql)
+        self.con.commit()
+
+    def get_deck(self, deck_name):
+        sql = "SELECT * FROM " + scrub(deck_name)
+        res = self.run_sql(sql)
+        cards = []
+        for result in res.fetchall():
+            cards.append(card(result[0], result[1], result[2], result[3], result[4], result[5], result[6]))
+        return cards
+
 
 
     def run_sql(self, sql):

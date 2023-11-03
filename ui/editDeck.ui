@@ -42,7 +42,7 @@
       </layout>
      </item>
      <item>
-      <widget class="QListView" name="listView"/>
+      <widget class="QListWidget" name="cardList"/>
      </item>
     </layout>
    </item>
