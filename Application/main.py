@@ -1,16 +1,21 @@
 #import PyQt5
-from datetime import datetime, timedelta
+import math
+import random
+import time
+from datetime import datetime, timedelta, date
 
 from PyQt5 import QtGui, QtCore, QtWidgets
 import sys
 from os import path, chdir, mkdir, getlogin
 
+from PyQt5.QtGui import QTextCursor
 from PyQt5.QtWidgets import QMessageBox
 
 import Windows.mainWindow
 import Windows.addDeck
 import Windows.viewDeck
 import Windows.editDeck
+import Windows.playDeck
 from Objects.profile import Profile, card
 
 
@@ -38,30 +43,108 @@ class MyWindow(QtWidgets.QMainWindow, Windows.mainWindow.Ui_MainWindow):
         print("Closing app")
         self.profile.close_db()
 
-class PlayDeckWindow(QtWidgets.QDialog, Windows.viewDeck.Ui_Dialog):  # TODO Change this to play deck window when designed.
 
-    def __init__(self, profile, cards, parent=None):
+class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
+    def __init__(self, profile, deck_name, cards, repetitions_flag, parent=None):
         super().__init__(parent)
+
+        self.repetitions_flag = repetitions_flag
 
         self.profile = profile
 
+        random.shuffle(cards)
+
         self.cards = cards
+
+        self.deck_name = deck_name
 
         self.setupUi(self)
 
-        self.setWindowTitle("Play Deck")    # TODO Display deck name
+        self.setWindowTitle(deck_name)
 
-    def gen_score(self, played_card, quality_score):
-        return played_card.score+(0.1-(5-quality_score)*(0.08+(5-quality_score)*0.02))
+        self.answerEdit.installEventFilter(self)
 
-    def gen_due_date(self, played_card):    # TODO Test this
-        if played_card.repetitions <= 1:
-            return datetime.today() + timedelta(days=1)
-        elif played_card.repetitions == 2:
-            return datetime.today() + timedelta(days=6)
+        self.drawn_card = None
+
+        self.start_time = None
+
+        self.draw_card()
+
+        self.spelling_error = False
+
+        self.perfect_time_limit = 10        # Number of seconds that an answer must be given in order to achieve a 5. TODO implement settings so this can be modified by the user
+
+    def gen_score(self, old_score, quality_score):
+        return old_score+(0.1-(5-quality_score)*(0.08+(5-quality_score)*0.02))
+
+    def gen_due_date(self):
+        if self.drawn_card.repetitions <= 1:
+            return datetime.today().date() + timedelta(days=1)
+        elif self.drawn_card.repetitions == 2:
+            return datetime.today().date() + timedelta(days=6)
         else:
-            return (played_card.repetitions - 1) * played_card.score
+            return datetime.today().date() + timedelta(days=math.floor((self.drawn_card.repetitions - 1) * self.drawn_card.score))
 
+
+    def draw_card(self):
+        if len(self.cards) > 0:
+            self.drawn_card = self.cards.pop(0)
+            self.spelling_error = False
+            self.start_time = time.time()
+            self.questionLabel.setText(self.drawn_card.question)
+            self.answerEdit.clear()
+
+            cursor = self.answerEdit.cursor()           # TODO THIS DOESNT WORK, NEED TO MOVE CURSOR TO BEGINNING OF TEXT EDIT WHEN ANSWERED
+            cursor.movePosition(QTextCursor.Start)
+            self.answerEdit.setTextCursor(cursor)
+
+        else:
+            self.questionLabel.clear()
+            self.answerEdit.clear()
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setText(self.deck_name + " finished")
+            msg.setWindowTitle(self.deck_name)
+            msg.exec()
+            self.close()
+
+    def check_answer(self):
+        if self.answerEdit.toPlainText().rstrip() == self.drawn_card.answer:
+            timer = time.time() - self.start_time
+            if timer < self.perfect_time_limit and not self.spelling_error:
+                quality = 5
+            elif (timer > self.perfect_time_limit) ^ self.spelling_error:
+                quality = 4
+            #elif timer > self.perfect_time_limit and self.spelling_error:
+            else:
+                quality = 3
+            self.update_card(quality)
+            self.draw_card()
+        else:
+            self.spelling_error = True
+
+
+    def update_card(self, quality):
+
+        if self.repetitions_flag:
+            if quality > 2:
+                self.drawn_card.repetitions = self.drawn_card.repetitions + 1
+                current_score = self.drawn_card.score
+                self.drawn_card.score = self.gen_score(current_score, quality)
+            else:
+                self.drawn_card.repetitions = 0
+
+            self.drawn_card.date_played = date.today()
+
+            self.drawn_card.date_due = self.gen_due_date()
+
+            self.profile.update_card(self.drawn_card, self.deck_name)
+
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.KeyPress and obj is self.answerEdit:
+            if event.key() == QtCore.Qt.Key_Return and self.answerEdit.hasFocus():
+                self.check_answer()
+        return super().eventFilter(obj, event)
 
 
 
@@ -82,9 +165,17 @@ class ViewDecksWindow(QtWidgets.QDialog, Windows.viewDeck.Ui_Dialog):
         self.removeBtn.clicked.connect(self.remove_deck)
         self.editBtn.clicked.connect(self.edit_deck)
         self.exitBtn.clicked.connect(self.close)
+        self.playBtn.clicked.connect(self.play_deck)
 
         self.selected_deck = None
         self.listWidget.itemClicked.connect(self.list_click)
+
+    def play_deck(self):
+        if self.selected_deck is not None:
+            cards = self.profile.get_deck(self.selected_deck)
+            dialog = PlayDeckWindow(self.profile, self.selected_deck, cards, True)  # TODO add options for user to play whole deck/subset or just repetitions
+            dialog.exec()
+
 
     def list_click(self, item):
         print(item.text())

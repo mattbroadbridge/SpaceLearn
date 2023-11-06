@@ -40,6 +40,22 @@ class Profile:
         self.con = sqlite3.connect(path.join(home_path, "Database.db"))
         self.cur = self.con.cursor()
 
+    def update_card(self, drawn_card, deck_title):
+
+        sql = "UPDATE " + scrub(deck_title) + " SET score=?, date_completed=?, repetitions=?, date_due=? WHERE id=?"
+
+        try:
+            res = self.cur.execute(sql, (drawn_card.score, drawn_card.date_played, drawn_card.repetitions, drawn_card.date_due, drawn_card.cardID))
+            self.con.commit()
+        except sqlite3.Error as er:
+            print('SQLite error: %s' % (' '.join(er.args)))
+            print("Exception class is: ", er.__class__)
+            print('SQLite traceback: ')
+            exc_type, exc_value, exc_tb = sys.exc_info()
+            print(traceback.format_exception(exc_type, exc_value, exc_tb))
+        return res
+
+
     def add_deck(self, deck_title):
 
         sql = "SELECT name FROM sqlite_master WHERE type='table' AND name=" + "'" + scrub(deck_title) + "'"
