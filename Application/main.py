@@ -44,38 +44,45 @@ class MyWindow(QtWidgets.QMainWindow, Windows.mainWindow.Ui_MainWindow):
         self.profile.close_db()
 
 
+
 class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
     def __init__(self, profile, deck_name, cards, repetitions_flag, parent=None):
         super().__init__(parent)
-
+        self.spelling_error = 0
+        self.allowed_errors = 0
+        self.error_limit = 5
+        self.perfect_time_limit = 10        # Number of seconds that an answer must be given in order to achieve a 5. TODO implement settings so this can be modified by the user
+        self.incorrect_limit = 10 * 1000        # Convert to miliseconds
+        self.answer_timer = QtCore.QTimer()
+        self.answer_timer.setSingleShot(True)
+        self.answer_timer.timeout.connect(self.time_out)
         self.repetitions_flag = repetitions_flag
-
         self.profile = profile
-
         random.shuffle(cards)
-
         self.cards = cards
-
         self.deck_name = deck_name
-
         self.setupUi(self)
-
         self.setWindowTitle(deck_name)
-
         self.answerEdit.installEventFilter(self)
-
+        self.exitBtn.clicked.connect(self.close)
+        self.skipBtn.clicked.connect(self.skip_question)
         self.drawn_card = None
-
         self.start_time = None
-
         self.draw_card()
 
-        self.spelling_error = False
 
-        self.perfect_time_limit = 10        # Number of seconds that an answer must be given in order to achieve a 5. TODO implement settings so this can be modified by the user
+        #self.setWindowState(QtCore.Qt.WindowMaximized)  # self.showMaximised has some strange side effects, this produces the desired result.
+
+
 
     def gen_score(self, old_score, quality_score):
-        return old_score+(0.1-(5-quality_score)*(0.08+(5-quality_score)*0.02))
+        res = old_score+(0.1-(5-quality_score)*(0.08+(5-quality_score)*0.02))
+        if res > 2.5:
+            return 2.5
+        elif res < 1.1:
+            return 1.1
+        else:
+            return res
 
     def gen_due_date(self):
         if self.drawn_card.repetitions <= 1:
@@ -89,15 +96,12 @@ class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
     def draw_card(self):
         if len(self.cards) > 0:
             self.drawn_card = self.cards.pop(0)
-            self.spelling_error = False
+            self.spelling_error = 0
             self.start_time = time.time()
             self.questionLabel.setText(self.drawn_card.question)
             self.answerEdit.clear()
-
-            cursor = self.answerEdit.cursor()           # TODO THIS DOESNT WORK, NEED TO MOVE CURSOR TO BEGINNING OF TEXT EDIT WHEN ANSWERED
-            cursor.movePosition(QTextCursor.Start)
-            self.answerEdit.setTextCursor(cursor)
-
+            self.answerEdit.setFocus()
+            self.answer_timer.start(self.incorrect_limit)
         else:
             self.questionLabel.clear()
             self.answerEdit.clear()
@@ -109,11 +113,12 @@ class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
             self.close()
 
     def check_answer(self):
-        if self.answerEdit.toPlainText().rstrip() == self.drawn_card.answer:
+        if self.answerEdit.text().rstrip().lstrip() == self.drawn_card.answer:
             timer = time.time() - self.start_time
-            if timer < self.perfect_time_limit and not self.spelling_error:
+            self.answer_timer.stop()
+            if timer < self.perfect_time_limit and self.spelling_error == self.allowed_errors:
                 quality = 5
-            elif (timer > self.perfect_time_limit) ^ self.spelling_error:
+            elif (timer > self.perfect_time_limit) ^ (self.spelling_error > self.allowed_errors):
                 quality = 4
             #elif timer > self.perfect_time_limit and self.spelling_error:
             else:
@@ -121,7 +126,22 @@ class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
             self.update_card(quality)
             self.draw_card()
         else:
-            self.spelling_error = True
+            self.spelling_error = self.spelling_error + 1
+            if self.spelling_error >= self.error_limit:
+                self.skip_question()
+
+    # If time limit is reached, skip question
+    def time_out(self):
+        self.update_card(2)
+        self.draw_card()
+        print("Times up!")
+
+    # If time limit is not reached, but another parameter is met, skip question. These need to be two separate functions. Probably a better way to do this?
+    def skip_question(self):
+        self.answer_timer.stop()
+        self.update_card(2)
+        self.draw_card()
+        print("Skipped")
 
 
     def update_card(self, quality):
@@ -145,7 +165,6 @@ class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
             if event.key() == QtCore.Qt.Key_Return and self.answerEdit.hasFocus():
                 self.check_answer()
         return super().eventFilter(obj, event)
-
 
 
 
