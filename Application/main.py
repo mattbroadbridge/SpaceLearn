@@ -192,7 +192,13 @@ class ViewDecksWindow(QtWidgets.QDialog, Windows.viewDeck.Ui_Dialog):
     def play_deck(self):
         if self.selected_deck is not None:
             cards = self.profile.get_deck(self.selected_deck)
-            dialog = PlayDeckWindow(self.profile, self.selected_deck, cards, True)  # TODO add options for user to play whole deck/subset or just repetitions
+            match self.playBox.currentText():
+                case "Revisions":
+                    cards = [x for x in cards if datetime.strptime(x.date_due, '%Y-%m-%d').date() <= date.today()]
+                case "Entire Deck":
+                    print("Entire deck loaded")
+
+            dialog = PlayDeckWindow(self.profile, self.selected_deck, cards, True)
             dialog.exec()
 
 

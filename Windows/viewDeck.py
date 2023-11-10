@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(400, 300)
+        Dialog.resize(587, 380)
         Dialog.setStyleSheet("background-color: rgb(255, 211, 228);\n"
 "background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(198, 117, 223, 255), stop:1 rgba(255, 255, 255, 255));\n"
 "border-color: rgb(241, 185, 255);")
@@ -25,6 +25,13 @@ class Ui_Dialog(object):
         self.playBtn = QtWidgets.QPushButton(Dialog)
         self.playBtn.setObjectName("playBtn")
         self.verticalLayout.addWidget(self.playBtn)
+        self.playBox = QtWidgets.QComboBox(Dialog)
+        self.playBox.setObjectName("playBox")
+        self.playBox.addItem("")
+        self.playBox.addItem("")
+        self.verticalLayout.addWidget(self.playBox)
+        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacerItem)
         self.editBtn = QtWidgets.QPushButton(Dialog)
         self.editBtn.setStyleSheet("background-color: rgb(255, 211, 228);")
         self.editBtn.setObjectName("editBtn")
@@ -58,6 +65,8 @@ class Ui_Dialog(object):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
         self.playBtn.setText(_translate("Dialog", "Play"))
+        self.playBox.setItemText(0, _translate("Dialog", "Revisions"))
+        self.playBox.setItemText(1, _translate("Dialog", "Entire Deck"))
         self.editBtn.setText(_translate("Dialog", "Edit (Add cards)"))
         self.addBtn.setText(_translate("Dialog", "Add"))
         self.removeBtn.setText(_translate("Dialog", "Remove"))
