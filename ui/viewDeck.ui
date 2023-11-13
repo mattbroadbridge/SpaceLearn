@@ -86,6 +86,13 @@ border-color: rgb(241, 185, 255);</string>
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="settingsBtn">
+       <property name="text">
+        <string>Settings</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="exitBtn">
        <property name="styleSheet">
         <string notr="true">background-color: rgb(255, 211, 228);</string>

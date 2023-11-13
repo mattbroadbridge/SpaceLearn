@@ -1,5 +1,6 @@
 #import PyQt5
 import math
+import os.path
 import random
 import time
 from datetime import datetime, timedelta, date
@@ -16,43 +17,18 @@ import Windows.addDeck
 import Windows.viewDeck
 import Windows.editDeck
 import Windows.playDeck
+import Windows.settings
 from Objects.profile import Profile, card
 
 
-class MyWindow(QtWidgets.QMainWindow, Windows.mainWindow.Ui_MainWindow):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-
-        self.setupUi(self)
-
-        # This variable holds an instance of an opened window, to stop pythons garbage collection immediately shutting it
-        #self.dialog = None
-
-        # Connecting elements of the UI to functions
-        self.viewBtn.clicked.connect(self.view_decks)
-        #self.RemoveBtn.clicked.connect(self.remove_deck)
-
-        self.profile = Profile(getlogin(), path.join(path.expanduser("~"), ".SpaceLearn"))
-
-    def view_decks(self):
-        dialog = ViewDecksWindow(self.profile)
-        dialog.exec()
-
-    def closeEvent(self, event):
-        print("Closing app")
-        self.profile.close_db()
-
-
-
 class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
-    def __init__(self, profile, deck_name, cards, repetitions_flag, parent=None):
+    def __init__(self, profile, deck_name, cards, repetitions_flag, settings, parent=None):
         super().__init__(parent)
         self.spelling_error = 0
-        self.allowed_errors = 0
-        self.error_limit = 5
-        self.perfect_time_limit = 10        # Number of seconds that an answer must be given in order to achieve a 5. TODO implement settings so this can be modified by the user
-        self.incorrect_limit = 10 * 1000        # Convert to miliseconds
+        self.allowed_errors = int(settings.value("allowed_errors"))
+        self.error_limit = int(settings.value("error_limit"))
+        self.perfect_time_limit = int(settings.value("perfect_time_limit"))        # Number of seconds that an answer must be given in order to achieve a 5. TODO implement settings so this can be modified by the user
+        self.incorrect_limit = int(settings.value("incorrect_limit")) * 1000        # Convert to miliseconds
         self.answer_timer = QtCore.QTimer()
         self.answer_timer.setSingleShot(True)
         self.answer_timer.timeout.connect(self.time_out)
@@ -116,7 +92,7 @@ class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
         if self.answerEdit.text().rstrip().lstrip() == self.drawn_card.answer:
             timer = time.time() - self.start_time
             self.answer_timer.stop()
-            if timer < self.perfect_time_limit and self.spelling_error == self.allowed_errors:
+            if timer < self.perfect_time_limit and self.spelling_error <= self.allowed_errors:
                 quality = 5
             elif (timer > self.perfect_time_limit) ^ (self.spelling_error > self.allowed_errors):
                 quality = 4
@@ -167,12 +143,61 @@ class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
         return super().eventFilter(obj, event)
 
 
+def writeSettings(settings_dict, settings):
+    settings.setValue('allowed_errors', settings_dict["allowed_errors"])
+    settings.setValue('error_limit', settings_dict["error_limit"])
+    settings.setValue('perfect_time_limit', settings_dict["perfect_time_limit"])
+    settings.setValue('incorrect_limit', settings_dict["incorrect_limit"])
+
+
+class settingsWindow(QtWidgets.QDialog, Windows.settings.Ui_Dialog):
+    def __init__(self, settings, parent=None):
+        super().__init__(parent)
+        self.setupUi(self)
+        self.settings = settings
+        self.allowed_errors.setValue(int(self.settings.value("allowed_errors")))
+        self.error_limit.setValue(int(self.settings.value("error_limit")))
+        self.perfect_time.setValue(int(self.settings.value("perfect_time_limit")))
+        self.incorrect_limit.setValue(int(self.settings.value("incorrect_limit")))
+
+        self.setWindowTitle("Settings")
+
+        self.exitBtn.clicked.connect(self.close)
+        self.applyBtn.clicked.connect(self.update_button)
+
+    def update_button(self):
+        res = self.update_settings()
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information)
+        msg.setText(res)
+        msg.setWindowTitle("Message")
+        msg.exec()
+
+    def update_settings(self):
+
+        if 0 < self.allowed_errors.value() < self.error_limit.value():
+            if 0 < self.perfect_time.value() < self.incorrect_limit.value():
+                new_settings = {"allowed_errors": self.allowed_errors.value(),
+                                "error_limit": self.error_limit.value(),
+                                "perfect_time_limit": self.perfect_time.value(),
+                                "incorrect_limit": self.incorrect_limit.value()}
+                writeSettings(new_settings, self.settings)
+
+                return "Settings changed successfully"
+            else:
+                return "Error - Please ensure that the incorrect time limit is higher than the perfect score limit"
+        else:
+            return "Error - Please ensure that the error limit is higher than the allowed mistakes"
+
+
+
+
 
 class ViewDecksWindow(QtWidgets.QDialog, Windows.viewDeck.Ui_Dialog):
-    def __init__(self, profile, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.profile = profile
+        self.profile = Profile(getlogin(), path.join(path.expanduser("~"), ".SpaceLearn"))
 
         self.setupUi(self)
 
@@ -185,21 +210,53 @@ class ViewDecksWindow(QtWidgets.QDialog, Windows.viewDeck.Ui_Dialog):
         self.editBtn.clicked.connect(self.edit_deck)
         self.exitBtn.clicked.connect(self.close)
         self.playBtn.clicked.connect(self.play_deck)
+        self.settingsBtn.clicked.connect(self.edit_settings)
 
         self.selected_deck = None
         self.listWidget.itemClicked.connect(self.list_click)
 
+
+    def get_settings(self):
+        if os.path.exists(path.join(path.expanduser("~"), ".SpaceLearn", "SpaceLearn.conf")):
+            return QtCore.QSettings(path.join(path.expanduser("~"), ".SpaceLearn", "SpaceLearn.conf"), QtCore.QSettings.IniFormat)
+        else:
+            settings = QtCore.QSettings(path.join(path.expanduser("~"), ".SpaceLearn", "SpaceLearn.conf"), QtCore.QSettings.IniFormat)
+            default_settings = {"allowed_errors": 1,
+                                "error_limit": 5,
+                                "perfect_time_limit": 10,
+                                "incorrect_limit": 30}
+            writeSettings(default_settings, settings)
+            return settings
+
+    def closeEvent(self, event):
+        print("Closing app")
+        self.profile.close_db()
+
+
+    def edit_settings(self):
+        dialog = settingsWindow(self.get_settings())
+        dialog.exec()
+        return
+
     def play_deck(self):
         if self.selected_deck is not None:
             cards = self.profile.get_deck(self.selected_deck)
+
             match self.playBox.currentText():
                 case "Revisions":
                     cards = [x for x in cards if datetime.strptime(x.date_due, '%Y-%m-%d').date() <= date.today()]
                 case "Entire Deck":
                     print("Entire deck loaded")
 
-            dialog = PlayDeckWindow(self.profile, self.selected_deck, cards, True)
-            dialog.exec()
+            if len(cards) > 0:
+                dialog = PlayDeckWindow(self.profile, self.selected_deck, cards, True, self.get_settings())
+                dialog.exec()
+            else:
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Information)
+                msg.setText("No cards to play")
+                msg.setWindowTitle("Message")
+                msg.exec()
 
 
     def list_click(self, item):
@@ -304,7 +361,7 @@ class AddDeckWindow(QtWidgets.QDialog, Windows.addDeck.Ui_Dialog):
 def application():
     app = QtWidgets.QApplication(sys.argv)
 
-    first_window = MyWindow()
+    first_window = ViewDecksWindow()
     first_window.showMaximized()
     # Set window size
     #first_window.resize(400, 300)
