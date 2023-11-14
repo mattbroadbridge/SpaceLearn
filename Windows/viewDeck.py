@@ -17,7 +17,9 @@ class Ui_Dialog(object):
         Dialog.resize(587, 380)
         Dialog.setStyleSheet("background-color: rgb(255, 211, 228);\n"
 "background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(198, 117, 223, 255), stop:1 rgba(255, 255, 255, 255));\n"
-"border-color: rgb(241, 185, 255);")
+"border-color: rgb(241, 185, 255);\n"
+"font-size:20px;\n"
+"")
         self.horizontalLayout = QtWidgets.QHBoxLayout(Dialog)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.verticalLayout = QtWidgets.QVBoxLayout()
@@ -60,6 +62,9 @@ class Ui_Dialog(object):
         self.listWidget.setSizePolicy(sizePolicy)
         self.listWidget.setObjectName("listWidget")
         self.horizontalLayout.addWidget(self.listWidget)
+        self.repsList = QtWidgets.QListWidget(Dialog)
+        self.repsList.setObjectName("repsList")
+        self.horizontalLayout.addWidget(self.repsList)
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)

@@ -5,6 +5,8 @@ import random
 import time
 from datetime import datetime, timedelta, date
 
+import win32api
+
 from PyQt5 import QtGui, QtCore, QtWidgets
 import sys
 from os import path, chdir, mkdir, getlogin
@@ -27,7 +29,7 @@ class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
         self.spelling_error = 0
         self.allowed_errors = int(settings.value("allowed_errors"))
         self.error_limit = int(settings.value("error_limit"))
-        self.perfect_time_limit = int(settings.value("perfect_time_limit"))        # Number of seconds that an answer must be given in order to achieve a 5. TODO implement settings so this can be modified by the user
+        self.perfect_time_limit = int(settings.value("perfect_time_limit"))        # Number of seconds that an answer must be given in order to achieve a 5.
         self.incorrect_limit = int(settings.value("incorrect_limit")) * 1000        # Convert to miliseconds
         self.answer_timer = QtCore.QTimer()
         self.answer_timer.setSingleShot(True)
@@ -44,7 +46,10 @@ class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
         self.skipBtn.clicked.connect(self.skip_question)
         self.drawn_card = None
         self.start_time = None
-        self.draw_card()
+        self.answering_flag = False
+
+        self.resultLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.questionLabel.setText(deck_name)
 
 
         #self.setWindowState(QtCore.Qt.WindowMaximized)  # self.showMaximised has some strange side effects, this produces the desired result.
@@ -71,6 +76,8 @@ class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
 
     def draw_card(self):
         if len(self.cards) > 0:
+            self.update_result_label("background-color:white", "")
+            self.answering_flag = True
             self.drawn_card = self.cards.pop(0)
             self.spelling_error = 0
             self.start_time = time.time()
@@ -90,6 +97,8 @@ class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
 
     def check_answer(self):
         if self.answerEdit.text().rstrip().lstrip() == self.drawn_card.answer:
+            self.answering_flag = False
+            self.update_result_label("background-color:green", "Correct!")
             timer = time.time() - self.start_time
             self.answer_timer.stop()
             if timer < self.perfect_time_limit and self.spelling_error <= self.allowed_errors:
@@ -100,24 +109,36 @@ class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
             else:
                 quality = 3
             self.update_card(quality)
-            self.draw_card()
         else:
             self.spelling_error = self.spelling_error + 1
+            display_str = "Incorrect - " + self.answerEdit.text()
+            self.answerEdit.clear()
+            self.update_result_label("background-color:orange", display_str)
             if self.spelling_error >= self.error_limit:
                 self.skip_question()
+
 
     # If time limit is reached, skip question
     def time_out(self):
         self.update_card(2)
-        self.draw_card()
+        self.answering_flag = False
+        display_str = "Times up - " + self.drawn_card.answer
+        self.update_result_label("background-color:red", display_str)
         print("Times up!")
 
     # If time limit is not reached, but another parameter is met, skip question. These need to be two separate functions. Probably a better way to do this?
     def skip_question(self):
         self.answer_timer.stop()
         self.update_card(2)
-        self.draw_card()
+        self.answering_flag = False
+        display_str = "Fail - " + self.drawn_card.answer
+        self.update_result_label("background-color:red", display_str)
+
         print("Skipped")
+
+    def update_result_label(self, colour, display_str):
+        self.resultLabel.setStyleSheet(colour)
+        self.resultLabel.setText(display_str)
 
 
     def update_card(self, quality):
@@ -139,15 +160,17 @@ class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
     def eventFilter(self, obj, event):
         if event.type() == QtCore.QEvent.KeyPress and obj is self.answerEdit:
             if event.key() == QtCore.Qt.Key_Return and self.answerEdit.hasFocus():
-                self.check_answer()
+                if self.answering_flag:
+                    self.check_answer()
+                else:
+                    self.draw_card()
         return super().eventFilter(obj, event)
 
 
 def writeSettings(settings_dict, settings):
-    settings.setValue('allowed_errors', settings_dict["allowed_errors"])
-    settings.setValue('error_limit', settings_dict["error_limit"])
-    settings.setValue('perfect_time_limit', settings_dict["perfect_time_limit"])
-    settings.setValue('incorrect_limit', settings_dict["incorrect_limit"])
+    for key in settings_dict:
+        settings.setValue(key, settings_dict[key])
+
 
 
 class settingsWindow(QtWidgets.QDialog, Windows.settings.Ui_Dialog):
@@ -244,7 +267,7 @@ class ViewDecksWindow(QtWidgets.QDialog, Windows.viewDeck.Ui_Dialog):
 
             match self.playBox.currentText():
                 case "Revisions":
-                    cards = [x for x in cards if datetime.strptime(x.date_due, '%Y-%m-%d').date() <= date.today()]
+                    cards = self.get_cards_due(cards)
                 case "Entire Deck":
                     print("Entire deck loaded")
 
@@ -259,14 +282,21 @@ class ViewDecksWindow(QtWidgets.QDialog, Windows.viewDeck.Ui_Dialog):
                 msg.exec()
 
 
+    def get_cards_due(self, cards):
+        return [x for x in cards if datetime.strptime(x.date_due, '%Y-%m-%d').date() <= date.today()]
     def list_click(self, item):
         print(item.text())
         self.selected_deck = item.text()
 
     def update_list(self):
         self.listWidget.clear()
+        self.repsList.clear()
         names = self.profile.get_deck_names()
         for name in names:
+            deck = self.profile.get_deck(name)
+            revisions = self.get_cards_due(deck)
+            display = "Revisions due: " + str(len(revisions))
+            self.repsList.insertItem(0, display)
             self.listWidget.insertItem(0, name)    # First argument passed is position in list, this ensures that its always first
 
     def add_deck(self):
@@ -287,6 +317,7 @@ class ViewDecksWindow(QtWidgets.QDialog, Windows.viewDeck.Ui_Dialog):
         if self.selected_deck is not None:
             dialog = EditDeckWindow(self.profile, self.selected_deck)
             dialog.exec()
+            self.update_list()
 
 
 class EditDeckWindow(QtWidgets.QDialog, Windows.editDeck.Ui_Dialog):
@@ -362,9 +393,8 @@ def application():
     app = QtWidgets.QApplication(sys.argv)
 
     first_window = ViewDecksWindow()
-    first_window.showMaximized()
-    # Set window size
-    #first_window.resize(400, 300)
+    #first_window.showMaximized()       # Not really enough info on the screen to justify showing maximised...
+    first_window.show()
 
     # Set the form title
     first_window.setWindowTitle("Space Learn")
