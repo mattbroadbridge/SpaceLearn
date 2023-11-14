@@ -6,23 +6,32 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>421</width>
-    <height>327</height>
+    <width>705</width>
+    <height>526</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: rgb(255, 181, 198);
+
+
+</string>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <item alignment="Qt::AlignHCenter">
+   <item>
     <widget class="QLabel" name="questionLabel">
-     <property name="font">
-      <font>
-       <pointsize>30</pointsize>
-      </font>
+     <property name="styleSheet">
+      <string notr="true">font-size:35px;
+border: 3px solid black;
+background-color: rgb(255, 255, 255);</string>
      </property>
      <property name="text">
-      <string>TextLabel</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:26pt;&quot;&gt;TextLabel&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
      </property>
     </widget>
    </item>
@@ -46,13 +55,18 @@
     <widget class="QLineEdit" name="answerEdit">
      <property name="font">
       <font>
-       <pointsize>30</pointsize>
+       <pointsize>-1</pointsize>
        <weight>50</weight>
        <bold>false</bold>
       </font>
      </property>
      <property name="cursor">
       <cursorShape>IBeamCursor</cursorShape>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">font-size:30px;
+background-color: rgb(255, 255, 255);
+border: 3px solid black;</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
@@ -79,6 +93,10 @@
        <pointsize>20</pointsize>
       </font>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(255, 255, 255);
+border: 3px solid black;</string>
+     </property>
      <property name="text">
       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Press enter to begin&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
@@ -101,6 +119,10 @@
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QPushButton" name="exitBtn">
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(255, 211, 228);
+font-size:20px;</string>
+       </property>
        <property name="text">
         <string>Exit</string>
        </property>
@@ -117,6 +139,10 @@
      </item>
      <item>
       <widget class="QPushButton" name="skipBtn">
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(255, 211, 228);
+font-size:20px;</string>
+       </property>
        <property name="text">
         <string>Skip</string>
        </property>

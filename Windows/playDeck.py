@@ -14,24 +14,32 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(421, 327)
+        Dialog.resize(705, 526)
+        Dialog.setStyleSheet("background-color: rgb(255, 181, 198);\n"
+"\n"
+"\n"
+"")
         self.verticalLayout = QtWidgets.QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName("verticalLayout")
         self.questionLabel = QtWidgets.QLabel(Dialog)
-        font = QtGui.QFont()
-        font.setPointSize(30)
-        self.questionLabel.setFont(font)
+        self.questionLabel.setStyleSheet("font-size:35px;\n"
+"border: 3px solid black;\n"
+"background-color: rgb(255, 255, 255);")
+        self.questionLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.questionLabel.setObjectName("questionLabel")
-        self.verticalLayout.addWidget(self.questionLabel, 0, QtCore.Qt.AlignHCenter)
+        self.verticalLayout.addWidget(self.questionLabel)
         spacerItem = QtWidgets.QSpacerItem(20, 30, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem)
         self.answerEdit = QtWidgets.QLineEdit(Dialog)
         font = QtGui.QFont()
-        font.setPointSize(30)
+        font.setPointSize(-1)
         font.setBold(False)
         font.setWeight(50)
         self.answerEdit.setFont(font)
         self.answerEdit.setCursor(QtGui.QCursor(QtCore.Qt.IBeamCursor))
+        self.answerEdit.setStyleSheet("font-size:30px;\n"
+"background-color: rgb(255, 255, 255);\n"
+"border: 3px solid black;")
         self.answerEdit.setAlignment(QtCore.Qt.AlignCenter)
         self.answerEdit.setObjectName("answerEdit")
         self.verticalLayout.addWidget(self.answerEdit)
@@ -41,6 +49,8 @@ class Ui_Dialog(object):
         font = QtGui.QFont()
         font.setPointSize(20)
         self.resultLabel.setFont(font)
+        self.resultLabel.setStyleSheet("background-color: rgb(255, 255, 255);\n"
+"border: 3px solid black;")
         self.resultLabel.setObjectName("resultLabel")
         self.verticalLayout.addWidget(self.resultLabel)
         spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
@@ -48,12 +58,16 @@ class Ui_Dialog(object):
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.exitBtn = QtWidgets.QPushButton(Dialog)
+        self.exitBtn.setStyleSheet("background-color: rgb(255, 211, 228);\n"
+"font-size:20px;")
         self.exitBtn.setAutoDefault(False)
         self.exitBtn.setDefault(False)
         self.exitBtn.setFlat(False)
         self.exitBtn.setObjectName("exitBtn")
         self.horizontalLayout.addWidget(self.exitBtn)
         self.skipBtn = QtWidgets.QPushButton(Dialog)
+        self.skipBtn.setStyleSheet("background-color: rgb(255, 211, 228);\n"
+"font-size:20px;")
         self.skipBtn.setAutoDefault(False)
         self.skipBtn.setObjectName("skipBtn")
         self.horizontalLayout.addWidget(self.skipBtn)
@@ -65,7 +79,7 @@ class Ui_Dialog(object):
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-        self.questionLabel.setText(_translate("Dialog", "TextLabel"))
+        self.questionLabel.setText(_translate("Dialog", "<html><head/><body><p align=\"center\"><span style=\" font-size:26pt;\">TextLabel</span></p></body></html>"))
         self.resultLabel.setText(_translate("Dialog", "<html><head/><body><p align=\"center\">Press enter to begin</p></body></html>"))
         self.exitBtn.setText(_translate("Dialog", "Exit"))
         self.skipBtn.setText(_translate("Dialog", "Skip"))

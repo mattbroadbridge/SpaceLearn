@@ -15,19 +15,20 @@ class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
         Dialog.resize(587, 380)
-        Dialog.setStyleSheet("background-color: rgb(255, 211, 228);\n"
-"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(198, 117, 223, 255), stop:1 rgba(255, 255, 255, 255));\n"
-"border-color: rgb(241, 185, 255);\n"
+        Dialog.setStyleSheet("background-color: rgb(255, 181, 198);\n"
 "font-size:20px;\n"
+"\n"
 "")
         self.horizontalLayout = QtWidgets.QHBoxLayout(Dialog)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
         self.playBtn = QtWidgets.QPushButton(Dialog)
+        self.playBtn.setStyleSheet("background-color: rgb(255, 211, 228);")
         self.playBtn.setObjectName("playBtn")
         self.verticalLayout.addWidget(self.playBtn)
         self.playBox = QtWidgets.QComboBox(Dialog)
+        self.playBox.setStyleSheet("background-color: rgb(255, 211, 228);")
         self.playBox.setObjectName("playBox")
         self.playBox.addItem("")
         self.playBox.addItem("")
@@ -47,6 +48,7 @@ class Ui_Dialog(object):
         self.removeBtn.setObjectName("removeBtn")
         self.verticalLayout.addWidget(self.removeBtn)
         self.settingsBtn = QtWidgets.QPushButton(Dialog)
+        self.settingsBtn.setStyleSheet("background-color: rgb(255, 211, 228);")
         self.settingsBtn.setObjectName("settingsBtn")
         self.verticalLayout.addWidget(self.settingsBtn)
         self.exitBtn = QtWidgets.QPushButton(Dialog)
@@ -60,9 +62,11 @@ class Ui_Dialog(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.listWidget.sizePolicy().hasHeightForWidth())
         self.listWidget.setSizePolicy(sizePolicy)
+        self.listWidget.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.listWidget.setObjectName("listWidget")
         self.horizontalLayout.addWidget(self.listWidget)
         self.repsList = QtWidgets.QListWidget(Dialog)
+        self.repsList.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.repsList.setObjectName("repsList")
         self.horizontalLayout.addWidget(self.repsList)
 

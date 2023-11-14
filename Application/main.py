@@ -128,13 +128,14 @@ class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
 
     # If time limit is not reached, but another parameter is met, skip question. These need to be two separate functions. Probably a better way to do this?
     def skip_question(self):
-        self.answer_timer.stop()
-        self.update_card(2)
-        self.answering_flag = False
-        display_str = "Fail - " + self.drawn_card.answer
-        self.update_result_label("background-color:red", display_str)
-
-        print("Skipped")
+        if self.answering_flag:
+            self.answer_timer.stop()
+            self.update_card(2)
+            self.answering_flag = False
+            display_str = "Fail - " + self.drawn_card.answer
+            self.update_result_label("background-color:red", display_str)
+            self.answerEdit.setFocus()
+            print("Skipped")
 
     def update_result_label(self, colour, display_str):
         self.resultLabel.setStyleSheet(colour)
@@ -274,6 +275,7 @@ class ViewDecksWindow(QtWidgets.QDialog, Windows.viewDeck.Ui_Dialog):
             if len(cards) > 0:
                 dialog = PlayDeckWindow(self.profile, self.selected_deck, cards, True, self.get_settings())
                 dialog.exec()
+                self.update_list()
             else:
                 msg = QMessageBox()
                 msg.setIcon(QMessageBox.Information)
@@ -340,6 +342,9 @@ class EditDeckWindow(QtWidgets.QDialog, Windows.editDeck.Ui_Dialog):
 
         self.list_map = {}
 
+        self.answerEdit.installEventFilter(self)
+        self.questionEdit.installEventFilter(self)
+
         self.update_card_list()
 
     def list_click(self):
@@ -347,8 +352,11 @@ class EditDeckWindow(QtWidgets.QDialog, Windows.editDeck.Ui_Dialog):
         print(self.selected_card)
 
     def add_card(self):
-        self.profile.add_card(self.deck_name, self.questionEdit.toPlainText(), self.answerEdit.toPlainText())
-        self.update_card_list()
+        if len(self.questionEdit.text()) > 0 and len(self.answerEdit.text()) > 0:
+            self.profile.add_card(self.deck_name, self.questionEdit.text(), self.answerEdit.text())
+            self.update_card_list()
+            self.questionEdit.clear()
+            self.answerEdit.clear()
 
 
     def remove_card(self):
@@ -357,13 +365,19 @@ class EditDeckWindow(QtWidgets.QDialog, Windows.editDeck.Ui_Dialog):
             self.update_card_list()
             self.selected_card = None
 
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.KeyPress and (obj is self.answerEdit or obj is self.questionEdit):
+            if event.key() == QtCore.Qt.Key_Return and (obj is self.answerEdit or obj is self.questionEdit):
+                self.add_card()
+        return super().eventFilter(obj, event)
+
 
     def update_card_list(self):
         self.cardList.clear()
         cards = self.profile.get_deck(self.deck_name)
         list_pos = 0
         for single_card in cards:
-            display_str = str(single_card.cardID) + ") " + str(single_card.question) + "   -   " + str(single_card.answer)
+            display_str = str(single_card.question) + "   -   " + str(single_card.answer)
             self.cardList.insertItem(list_pos, display_str)
             self.list_map[list_pos] = single_card.cardID
             list_pos = list_pos + 1

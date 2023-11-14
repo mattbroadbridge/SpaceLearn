@@ -6,12 +6,17 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>948</width>
+    <height>439</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: rgb(255, 181, 198);
+font-size:20px;
+</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
@@ -20,29 +25,38 @@
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
         <widget class="QPushButton" name="removeBtn">
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(255, 211, 228);</string>
+         </property>
          <property name="text">
           <string>Remove</string>
          </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="editBtn">
-         <property name="text">
-          <string>Edit</string>
+         <property name="autoDefault">
+          <bool>false</bool>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="exitBtn">
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(255, 211, 228);</string>
+         </property>
          <property name="text">
           <string>Exit</string>
+         </property>
+         <property name="autoDefault">
+          <bool>false</bool>
          </property>
         </widget>
        </item>
       </layout>
      </item>
      <item>
-      <widget class="QListWidget" name="cardList"/>
+      <widget class="QListWidget" name="cardList">
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(255, 255, 255);</string>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
@@ -52,33 +66,33 @@
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
         <widget class="QPushButton" name="addBtn">
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(255, 211, 228);</string>
+         </property>
          <property name="text">
           <string>Add</string>
+         </property>
+         <property name="autoDefault">
+          <bool>false</bool>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPlainTextEdit" name="questionEdit">
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>50</height>
-          </size>
+        <widget class="QLineEdit" name="questionEdit">
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(255, 255, 255);</string>
          </property>
-         <property name="plainText">
+         <property name="text">
           <string>Question</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPlainTextEdit" name="answerEdit">
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>50</height>
-          </size>
+        <widget class="QLineEdit" name="answerEdit">
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(255, 255, 255);</string>
          </property>
-         <property name="plainText">
+         <property name="text">
           <string>Answer</string>
          </property>
         </widget>
