@@ -136,7 +136,6 @@ class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
         self.answering_flag = False
         display_str = "Times up - " + self.drawn_card.answer
         self.update_result_label("background-color:red", display_str)
-        print("Times up!")
 
     def skip_question(self):
         # If time limit is not reached, but another parameter is met, skip question. These need to be two separate functions. Probably a better way to do this?
@@ -147,7 +146,6 @@ class PlayDeckWindow(QtWidgets.QDialog, Windows.playDeck.Ui_Dialog):
             display_str = "Fail - " + self.drawn_card.answer
             self.update_result_label("background-color:red", display_str)
             self.answerEdit.setFocus()
-            print("Skipped")
 
     def update_result_label(self, colour, display_str):
         # Results label displays correct, incorrect, etc.
@@ -315,7 +313,6 @@ class ViewDecksWindow(QtWidgets.QDialog, Windows.viewDeck.Ui_Dialog):
 
     def list_click(self, item):
         # Keep track of which deck is selected
-        print(item.text())
         self.selected_deck = item.text()
 
     def update_list(self):
@@ -387,7 +384,6 @@ class EditDeckWindow(QtWidgets.QDialog, Windows.editDeck.Ui_Dialog):
     def list_click(self):
         # Keep track of which card is clicked
         self.selected_card = self.list_map[self.cardList.currentRow()]
-        print(self.selected_card)
 
     def add_card(self):
         # Add new card to the deck
