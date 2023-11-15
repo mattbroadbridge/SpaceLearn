@@ -1,12 +1,12 @@
 import sys
 import traceback
 from datetime import date
-from os import path, mkdir, getlogin
+from os import path, mkdir
 import sqlite3
 
 
-
 def scrub(table_name):
+    # Scrub SQL to prevent injections
     return ''.join(char for char in table_name if char.isalnum())
 
 
@@ -37,10 +37,12 @@ class Profile:
         self.home_path = home_path
         if not path.exists(self.home_path):
             mkdir(self.home_path)
-        self.con = sqlite3.connect(path.join(home_path, "Database.db"))
-        self.cur = self.con.cursor()
+        self.con = sqlite3.connect(path.join(home_path, "Database.db"))  # Connection
+        self.cur = self.con.cursor()        # Cursor
 
     def update_card(self, drawn_card, deck_title):
+
+        # Updates card in DB
 
         sql = "UPDATE " + scrub(deck_title) + " SET score=?, date_completed=?, repetitions=?, date_due=? WHERE id=?"
 
@@ -53,10 +55,12 @@ class Profile:
             print('SQLite traceback: ')
             exc_type, exc_value, exc_tb = sys.exc_info()
             print(traceback.format_exception(exc_type, exc_value, exc_tb))
+            return None
         return res
 
-
     def add_deck(self, deck_title):
+
+        # Add new deck to DB. Returns text for display in dialog message
 
         sql = "SELECT name FROM sqlite_master WHERE type='table' AND name=" + "'" + scrub(deck_title) + "'"
 
@@ -98,6 +102,7 @@ class Profile:
             print('SQLite traceback: ')
             exc_type, exc_value, exc_tb = sys.exc_info()
             print(traceback.format_exception(exc_type, exc_value, exc_tb))
+            return None
         return res
 
     def remove_card(self, deck_name, cardID):
@@ -112,8 +117,6 @@ class Profile:
         for result in res.fetchall():
             cards.append(card(result[0], result[1], result[2], result[3], result[4], result[5], result[6]))
         return cards
-
-
 
     def run_sql(self, sql):
         try:
